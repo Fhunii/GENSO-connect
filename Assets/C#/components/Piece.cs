@@ -4,17 +4,17 @@ using System.Collections.Generic;
 
 public class Piece : MonoBehaviour
 {
-    public enum ElementType { HydrogenIon, Carbon, OxygenIon } // エレメントタイプを修正
+    public enum ElementType { HydrogenIon, Carbon, OxygenIon }
 
     public ElementType elementType;
 
     public Sprite hydrogenIonSprite;
     public Sprite carbonSprite;
-    public Sprite oxygenIonSprite; // オキシゲンイオンのスプライト
+    public Sprite oxygenIonSprite;
 
     public Sprite hydrogenIonMonoSprite;
     public Sprite carbonMonoSprite;
-    public Sprite oxygenIonMonoSprite; // オキシゲンイオンのモノクロスプライト
+    public Sprite oxygenIonMonoSprite;
 
     private SpriteRenderer spriteRenderer;
 
@@ -23,7 +23,7 @@ public class Piece : MonoBehaviour
 
     private static List<Piece> connectedPieces = new List<Piece>();
     private static Piece lastConnectedPiece;
-    private static Piece firstClickedPiece; // 追加: 最初にクリックされたスプライト
+    private static Piece firstClickedPiece;
     private static bool isDragging = false;
     private static LineRenderer currentRedLine;
     private static List<LineRenderer> blueLines = new List<LineRenderer>();
@@ -78,14 +78,14 @@ public class Piece : MonoBehaviour
             {
                 ElementType.HydrogenIon => hydrogenIonSprite,
                 ElementType.Carbon => carbonSprite,
-                ElementType.OxygenIon => oxygenIonSprite, // オキシゲンイオンのスプライトに対応
+                ElementType.OxygenIon => oxygenIonSprite,
                 _ => spriteRenderer.sprite
             },
             false => elementType switch
             {
                 ElementType.HydrogenIon => hydrogenIonMonoSprite,
                 ElementType.Carbon => carbonMonoSprite,
-                ElementType.OxygenIon => oxygenIonMonoSprite, // オキシゲンイオンのモノクロスプライトに対応
+                ElementType.OxygenIon => oxygenIonMonoSprite,
                 _ => spriteRenderer.sprite
             }
         };
@@ -99,7 +99,7 @@ public class Piece : MonoBehaviour
         connectedPieces.Clear();
         connectedPieces.Add(this);
         lastConnectedPiece = this;
-        firstClickedPiece = this; // 追加: 最初にクリックされたスプライトを記録
+        firstClickedPiece = this;
 
         Vector2Int gridPosition = GetGridPosition();
         if (gridManager != null)
@@ -107,7 +107,6 @@ public class Piece : MonoBehaviour
             gridManager.SetActiveArea(gridPosition);
         }
 
-        // 赤い線の初期設定
         if (currentRedLine != null)
         {
             Destroy(currentRedLine.gameObject);
@@ -128,7 +127,6 @@ public class Piece : MonoBehaviour
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePosition.z = 0;
 
-        // 赤い線を更新
         if (currentRedLine != null)
         {
             currentRedLine.SetPosition(1, mousePosition);
@@ -140,14 +138,11 @@ public class Piece : MonoBehaviour
             Piece hitPiece = hit.collider.GetComponent<Piece>();
             if (hitPiece != null && hitPiece.isActive && hitPiece != lastConnectedPiece && CanConnect(hitPiece))
             {
-                // 青い線を描画
                 LineRenderer blueLine = CreateBlueLine(lastConnectedPiece.transform.position, hitPiece.transform.position);
                 blueLines.Add(blueLine);
 
-                // "終点"を"二つ目"に移動
                 lastConnectedPiece = hitPiece;
 
-                // 赤い線の始点を"終点"の位置に変更
                 if (currentRedLine != null)
                 {
                     currentRedLine.SetPosition(0, lastConnectedPiece.transform.position);
@@ -159,7 +154,6 @@ public class Piece : MonoBehaviour
             }
         }
 
-        // 二つ以上つないだときに赤い線を消す
         if (connectedPieces.Count > 1)
         {
             if (currentRedLine != null)
@@ -187,27 +181,33 @@ public class Piece : MonoBehaviour
 
         isDragging = false;
 
-        // 接続されたスプライトと青い線を削除
+        bool isValidCompound = CheckIfValidCompound();
+
         if (connectedPieces.Count > 1)
         {
             foreach (var piece in connectedPieces)
             {
                 if (piece != null)
                 {
-                    piece.DestroyWithEffect();
+                    if (isValidCompound)
+                    {
+                        piece.DestroyWithEffect();
+                    }
+                    else
+                    {
+                        piece.SetActive(true); // スプライトを再表示
+                    }
                 }
             }
             connectedPieces.Clear();
         }
 
-        // 赤い線を削除
         if (currentRedLine != null)
         {
             Destroy(currentRedLine.gameObject);
             currentRedLine = null;
         }
 
-        // 青い線をすべて削除
         foreach (var blueLine in blueLines)
         {
             Destroy(blueLine.gameObject);
@@ -217,16 +217,71 @@ public class Piece : MonoBehaviour
         gridManager.ResetActiveArea();
     }
 
-    public bool CanConnect(Piece otherPiece)
+    private bool CheckIfValidCompound()
     {
-        if (!isActive || !otherPiece.isActive)
+        Dictionary<ElementType, int> elementCounts = new Dictionary<ElementType, int>();
+
+        foreach (Piece piece in connectedPieces)
         {
-            return false;
+            if (!elementCounts.ContainsKey(piece.elementType))
+            {
+                elementCounts[piece.elementType] = 0;
+            }
+            elementCounts[piece.elementType]++;
         }
-        return (elementType == ElementType.HydrogenIon && otherPiece.elementType == ElementType.OxygenIon) ||
-               (elementType == ElementType.OxygenIon && otherPiece.elementType == ElementType.HydrogenIon) ||
-               (elementType == ElementType.Carbon && otherPiece.elementType == ElementType.OxygenIon) ||
-               (elementType == ElementType.OxygenIon && otherPiece.elementType == ElementType.Carbon);
+
+        return IsValidCompound(elementCounts);
+    }
+
+    private bool IsValidCompound(Dictionary<ElementType, int> elementCounts)
+    {
+        // 各化合物の検証
+        if (elementCounts.TryGetValue(ElementType.Carbon, out int carbonCount) &&
+            elementCounts.TryGetValue(ElementType.HydrogenIon, out int hydrogenCount) &&
+            elementCounts.TryGetValue(ElementType.OxygenIon, out int oxygenCount))
+        {
+            // メタン (CH₄)
+            if (carbonCount == 1 && hydrogenCount == 4 && oxygenCount == 0)
+                return true;
+
+            // 一酸化炭素 (CO)
+            if (carbonCount == 1 && hydrogenCount == 0 && oxygenCount == 1)
+                return true;
+
+            // 二酸化炭素 (CO₂)
+            if (carbonCount == 1 && hydrogenCount == 0 && oxygenCount == 2)
+                return true;
+
+            // 水 (H₂O)
+            if (carbonCount == 0 && hydrogenCount == 2 && oxygenCount == 1)
+                return true;
+
+            // メタノール (CH₃OH)
+            if (carbonCount == 1 && hydrogenCount == 4 && oxygenCount == 1)
+                return true;
+
+            // ホルムアルデヒド (H₂CO)
+            if (carbonCount == 1 && hydrogenCount == 2 && oxygenCount == 1)
+                return true;
+
+            // ギ酸 (HCOOH)
+            if (carbonCount == 1 && hydrogenCount == 2 && oxygenCount == 2)
+                return true;
+
+            // 酢酸 (CH₃COOH)
+            if (carbonCount == 2 && hydrogenCount == 4 && oxygenCount == 2)
+                return true;
+
+            // 炭酸 (H₂CO₃)
+            if (carbonCount == 1 && hydrogenCount == 2 && oxygenCount == 3)
+                return true;
+
+            // 炭酸水素イオン (HCO₃⁻)
+            if (carbonCount == 1 && hydrogenCount == 1 && oxygenCount == 3)
+                return true;
+        }
+
+        return false;
     }
 
     public Vector2Int GetGridPosition()
@@ -270,22 +325,24 @@ public class Piece : MonoBehaviour
 
     private IEnumerator DestroyAnimation()
     {
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr == null) yield break; // SpriteRenderer が存在しない場合は早期リターン
-
-        Color startColor = sr.color;
-        Color endColor = new Color(startColor.r, startColor.g, startColor.b, 0);
         float duration = 0.3f;
         float elapsedTime = 0f;
+        Vector3 startScale = transform.localScale;
+        Vector3 endScale = Vector3.zero;
 
         while (elapsedTime < duration)
         {
-            sr.color = Color.Lerp(startColor, endColor, elapsedTime / duration);
+            transform.localScale = Vector3.Lerp(startScale, endScale, elapsedTime / duration);
             elapsedTime += Time.deltaTime;
             yield return null;
         }
 
-        sr.color = endColor;
+        transform.localScale = endScale;
         Destroy(gameObject);
+    }
+
+    public bool CanConnect(Piece otherPiece)
+    {
+        return Vector3.Distance(transform.position, otherPiece.transform.position) <= 1.5f;
     }
 }
