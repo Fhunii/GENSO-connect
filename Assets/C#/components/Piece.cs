@@ -91,6 +91,12 @@ public class Piece : MonoBehaviour
         };
     }
 
+    public void SetActive(bool active)
+    {
+        isActive = active;
+        UpdateSprite();
+    }
+
     void OnMouseDown()
     {
         if (!isActive) return;
@@ -149,8 +155,7 @@ public class Piece : MonoBehaviour
                 }
 
                 connectedPieces.Add(hitPiece);
-                hitPiece.isActive = false;
-                hitPiece.UpdateSprite();
+                hitPiece.SetActive(false); // isActive プロパティを変更
             }
         }
 
@@ -181,32 +186,28 @@ public class Piece : MonoBehaviour
 
         isDragging = false;
 
-        bool isValidCompound = CheckIfValidCompound();
-
-        if (connectedPieces.Count > 1)
+        bool validCompound = CheckIfValidCompound();
+        
+        if (validCompound)
         {
-            if (isValidCompound)
+            foreach (var piece in connectedPieces)
             {
-                foreach (var piece in connectedPieces)
+                if (piece != null)
                 {
-                    if (piece != null)
-                    {
-                        piece.DestroyWithEffect();
-                    }
+                    piece.DestroyWithEffect();
                 }
             }
-            else
-            {
-                foreach (var piece in connectedPieces)
-                {
-                    if (piece != null)
-                    {
-                        piece.SetActive(true); // スプライトを再表示
-                    }
-                }
-            }
-            connectedPieces.Clear();
         }
+        else
+        {
+            foreach (var blueLine in blueLines)
+            {
+                Destroy(blueLine.gameObject);
+            }
+        }
+
+        connectedPieces.Clear();
+        blueLines.Clear();
 
         if (currentRedLine != null)
         {
@@ -214,142 +215,65 @@ public class Piece : MonoBehaviour
             currentRedLine = null;
         }
 
-        foreach (var blueLine in blueLines)
-        {
-            Destroy(blueLine.gameObject);
-        }
-        blueLines.Clear();
-
         gridManager.ResetActiveArea();
-    }
-
-    private bool CheckIfValidCompound()
-    {
-        Dictionary<ElementType, int> elementCounts = new Dictionary<ElementType, int>();
-
-        foreach (Piece piece in connectedPieces)
-        {
-            if (!elementCounts.ContainsKey(piece.elementType))
-            {
-                elementCounts[piece.elementType] = 0;
-            }
-            elementCounts[piece.elementType]++;
-        }
-
-        return IsValidCompound(elementCounts);
-    }
-
-    private bool IsValidCompound(Dictionary<ElementType, int> elementCounts)
-    {
-        // 各化合物の検証
-        if (elementCounts.TryGetValue(ElementType.Carbon, out int carbonCount) &&
-            elementCounts.TryGetValue(ElementType.HydrogenIon, out int hydrogenCount) &&
-            elementCounts.TryGetValue(ElementType.OxygenIon, out int oxygenCount))
-        {
-            // メタン (CH₄)
-            if (carbonCount == 1 && hydrogenCount == 4 && oxygenCount == 0)
-                return true;
-
-            // 一酸化炭素 (CO)
-            if (carbonCount == 1 && hydrogenCount == 0 && oxygenCount == 1)
-                return true;
-
-            // 二酸化炭素 (CO₂)
-            if (carbonCount == 1 && hydrogenCount == 0 && oxygenCount == 2)
-                return true;
-
-            // 水 (H₂O)
-            if (carbonCount == 0 && hydrogenCount == 2 && oxygenCount == 1)
-                return true;
-
-            // メタノール (CH₃OH)
-            if (carbonCount == 1 && hydrogenCount == 4 && oxygenCount == 1)
-                return true;
-
-            // ホルムアルデヒド (H₂CO)
-            if (carbonCount == 1 && hydrogenCount == 2 && oxygenCount == 1)
-                return true;
-
-            // ギ酸 (HCOOH)
-            if (carbonCount == 1 && hydrogenCount == 2 && oxygenCount == 2)
-                return true;
-
-            // 酢酸 (CH₃COOH)
-            if (carbonCount == 2 && hydrogenCount == 4 && oxygenCount == 2)
-                return true;
-
-            // 炭酸 (H₂CO₃)
-            if (carbonCount == 1 && hydrogenCount == 2 && oxygenCount == 3)
-                return true;
-
-            // 炭酸水素イオン (HCO₃⁻)
-            if (carbonCount == 1 && hydrogenCount == 1 && oxygenCount == 3)
-                return true;
-        }
-
-        return false;
-    }
-
-    public Vector2Int GetGridPosition()
-    {
-        string[] nameParts = gameObject.name.Split(' ');
-        int x = int.Parse(nameParts[1]);
-        int y = int.Parse(nameParts[2]);
-        return new Vector2Int(x, y);
-    }
-
-    public void SetActive(bool active)
-    {
-        isActive = active;
-        UpdateSprite();
-    }
-
-    public void DestroyWithEffect()
-    {
-        if (sparkleEffectPrefab != null)
-        {
-            Vector3 effectPosition = transform.position;
-            effectPosition.z = -0.2f;
-            GameObject effect = Instantiate(sparkleEffectPrefab, effectPosition, Quaternion.identity);
-
-            var particleSystem = effect.GetComponent<ParticleSystem>();
-            if (particleSystem != null)
-            {
-                particleSystem.Play();
-            }
-
-            StartCoroutine(DestroyEffectAfterAnimation(effect, particleSystem));
-        }
-
-        StartCoroutine(DestroyAnimation());
-    }
-
-    private IEnumerator DestroyEffectAfterAnimation(GameObject effect, ParticleSystem particleSystem)
-    {
-        yield return new WaitUntil(() => !particleSystem.isPlaying);
-        Destroy(effect);
-    }
-
-    private IEnumerator DestroyAnimation()
-    {
-        float duration = 0.3f;
-        float elapsedTime = 0f;
-        Vector3 startScale = transform.localScale;
-        Vector3 endScale = Vector3.zero;
-
-        while (elapsedTime < duration)
-        {
-            transform.localScale = Vector3.Lerp(startScale, endScale, elapsedTime / duration);
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
-
-        transform.localScale = endScale;
-        Destroy(gameObject);
     }
 
     public bool CanConnect(Piece otherPiece)
     {
-        return Vector3.Distance(transform.position, otherPiece.transform.position) <= 1.5f;
+        if (!isActive || !otherPiece.isActive)
+        {
+            return false;
+        }
+
+        return (elementType != ElementType.HydrogenIon || otherPiece.elementType != ElementType.OxygenIon) &&
+               (elementType != ElementType.OxygenIon || otherPiece.elementType != ElementType.HydrogenIon) &&
+               (elementType != ElementType.Carbon || otherPiece.elementType != ElementType.OxygenIon) &&
+               (elementType != ElementType.OxygenIon || otherPiece.elementType != ElementType.Carbon);
+    }
+
+    private bool CheckIfValidCompound()
+    {
+        var elementCounts = new Dictionary<ElementType, int>();
+        foreach (var piece in connectedPieces)
+        {
+            if (piece != null)
+            {
+                if (!elementCounts.ContainsKey(piece.elementType))
+                {
+                    elementCounts[piece.elementType] = 0;
+                }
+                elementCounts[piece.elementType]++;
+            }
+        }
+
+        return (elementCounts.ContainsKey(ElementType.HydrogenIon) && elementCounts[ElementType.HydrogenIon] == 4 &&
+                elementCounts.ContainsKey(ElementType.Carbon) && elementCounts[ElementType.Carbon] == 1 &&
+                elementCounts.ContainsKey(ElementType.OxygenIon) && elementCounts[ElementType.OxygenIon] == 4) || 
+               (elementCounts.ContainsKey(ElementType.HydrogenIon) && elementCounts[ElementType.HydrogenIon] == 2 &&
+                elementCounts.ContainsKey(ElementType.Carbon) && elementCounts[ElementType.Carbon] == 1 &&
+                elementCounts.ContainsKey(ElementType.OxygenIon) && elementCounts[ElementType.OxygenIon] == 1) || 
+               (elementCounts.ContainsKey(ElementType.HydrogenIon) && elementCounts[ElementType.HydrogenIon] == 2 &&
+                elementCounts.ContainsKey(ElementType.Carbon) && elementCounts[ElementType.Carbon] == 1 &&
+                elementCounts.ContainsKey(ElementType.OxygenIon) && elementCounts[ElementType.OxygenIon] == 2) || 
+               (elementCounts.ContainsKey(ElementType.HydrogenIon) && elementCounts[ElementType.HydrogenIon] == 4 &&
+                elementCounts.ContainsKey(ElementType.Carbon) && elementCounts[ElementType.Carbon] == 2 &&
+                elementCounts.ContainsKey(ElementType.OxygenIon) && elementCounts[ElementType.OxygenIon] == 2) || 
+               (elementCounts.ContainsKey(ElementType.HydrogenIon) && elementCounts[ElementType.HydrogenIon] == 2 &&
+                elementCounts.ContainsKey(ElementType.Carbon) && elementCounts[ElementType.Carbon] == 1 &&
+                elementCounts.ContainsKey(ElementType.OxygenIon) && elementCounts[ElementType.OxygenIon] == 3) || 
+               (elementCounts.ContainsKey(ElementType.HydrogenIon) && elementCounts[ElementType.HydrogenIon] == 1 &&
+                elementCounts.ContainsKey(ElementType.Carbon) && elementCounts[ElementType.Carbon] == 1 &&
+                elementCounts.ContainsKey(ElementType.OxygenIon) && elementCounts[ElementType.OxygenIon] == 3);
+    }
+
+    public void DestroyWithEffect()
+    {
+        Instantiate(sparkleEffectPrefab, transform.position, Quaternion.identity);
+        Destroy(gameObject);
+    }
+
+    private Vector2Int GetGridPosition()
+    {
+        return new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
     }
 }
