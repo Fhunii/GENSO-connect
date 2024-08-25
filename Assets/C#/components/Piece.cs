@@ -185,15 +185,21 @@ public class Piece : MonoBehaviour
 
         if (connectedPieces.Count > 1)
         {
-            foreach (var piece in connectedPieces)
+            if (isValidCompound)
             {
-                if (piece != null)
+                foreach (var piece in connectedPieces)
                 {
-                    if (isValidCompound)
+                    if (piece != null)
                     {
                         piece.DestroyWithEffect();
                     }
-                    else
+                }
+            }
+            else
+            {
+                foreach (var piece in connectedPieces)
+                {
+                    if (piece != null)
                     {
                         piece.SetActive(true); // スプライトを再表示
                     }
@@ -312,12 +318,13 @@ public class Piece : MonoBehaviour
                 particleSystem.Play();
             }
 
-            StartCoroutine(DestroyEffectAfterPlay(effect, particleSystem));
+            StartCoroutine(DestroyEffectAfterAnimation(effect, particleSystem));
         }
+
         StartCoroutine(DestroyAnimation());
     }
 
-    private IEnumerator DestroyEffectAfterPlay(GameObject effect, ParticleSystem particleSystem)
+    private IEnumerator DestroyEffectAfterAnimation(GameObject effect, ParticleSystem particleSystem)
     {
         yield return new WaitUntil(() => !particleSystem.isPlaying);
         Destroy(effect);
