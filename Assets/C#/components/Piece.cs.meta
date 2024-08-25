@@ -5,13 +5,11 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - hydrogenIonSprite: {fileID: 21300000, guid: 997c2b0e90be40e4f8156724bb4983f6, type: 3}
-  - hydroxideIonSprite: {fileID: 21300000, guid: f7557ffb8c42c8b48b84bd28ff8dbace, type: 3}
   - carbonSprite: {fileID: 21300000, guid: e0d33d707b510fd4ca219cd44a001e1c, type: 3}
-  - oxygenSprite: {fileID: 21300000, guid: 97ed0ae64b4474d4892c8f5b9ec8f77d, type: 3}
+  - oxygenIonSprite: {fileID: 21300000, guid: 16f7bd32e59853540998cf5a129cd5b5, type: 3}
   - hydrogenIonMonoSprite: {fileID: 21300000, guid: a05677b59d1d7424e938539175b51156, type: 3}
-  - hydroxideIonMonoSprite: {fileID: 21300000, guid: caf9326db9e9ac94998d2360ed23c573, type: 3}
   - carbonMonoSprite: {fileID: 21300000, guid: 1a82dc8b2f60ff54fadec57808fb44ed, type: 3}
-  - oxygenMonoSprite: {fileID: 21300000, guid: 5f3b9b42ce511d94981dd46072a4b276, type: 3}
+  - oxygenIonMonoSprite: {fileID: 21300000, guid: 1baea782e2230544686877550cd85d50, type: 3}
   - sparkleEffectPrefab: {fileID: 2935834413251824617, guid: 4740e25d233f76246bb51bb299a0899e, type: 3}
   - linePrefab: {fileID: 3089949388854398402, guid: b519b849a92f6f64f92cdbe826bf69b6, type: 3}
   executionOrder: 0

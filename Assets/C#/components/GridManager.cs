@@ -49,7 +49,13 @@ public class GridManager : MonoBehaviour
                 piece.name = $"Piece {x} {y}";
                 var pieceComponent = piece.GetComponent<Piece>();
 
-                Piece.ElementType randomType = (Piece.ElementType)Random.Range(0, 4);
+                // 変更箇所: ランダムなElementTypeの選択
+                // HydroxideIon を削除し、Oxygen を OxygenIon に変更
+                Piece.ElementType randomType = (Piece.ElementType)Random.Range(0, 3);
+                if (randomType == Piece.ElementType.OxygenIon)
+                {
+                    randomType = Piece.ElementType.OxygenIon;
+                }
                 pieceComponent.SetElementType(randomType);
 
                 grid[x, y] = pieceComponent;

@@ -10,19 +10,21 @@ public class PieceSpawner : MonoBehaviour
         SpawnPiece(Piece.ElementType.HydrogenIon);
     }
 
-    public void SpawnHydroxideIon()
-    {
-        SpawnPiece(Piece.ElementType.HydroxideIon);
-    }
+    // `SpawnHydroxideIon` メソッドを削除
+    // public void SpawnHydroxideIon()
+    // {
+    //     SpawnPiece(Piece.ElementType.HydroxideIon);
+    // }
 
     public void SpawnCarbon()
     {
         SpawnPiece(Piece.ElementType.Carbon);
     }
 
-    public void SpawnOxygen()
+    // `SpawnOxygen` メソッドを `SpawnOxygenIon` に変更
+    public void SpawnOxygenIon()
     {
-        SpawnPiece(Piece.ElementType.Oxygen);
+        SpawnPiece(Piece.ElementType.OxygenIon);
     }
 
     private void SpawnPiece(Piece.ElementType elementType)
