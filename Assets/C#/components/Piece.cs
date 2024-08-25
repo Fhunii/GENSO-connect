@@ -31,6 +31,11 @@ public class Piece : MonoBehaviour
     private GridManager gridManager;
     private bool isActive = true;
 
+    public ElementType GetElementType()
+    {
+        return elementType;
+    }
+
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();

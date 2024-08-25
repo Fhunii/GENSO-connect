@@ -10,18 +10,18 @@ public class GridManager : MonoBehaviour
     public GameObject tilesParent;
     public GameObject piecesParent;
     public Piece[,] grid;
+    public Vector2 tileSize; // 追加: tileSize を公開するプロパティ
 
     void Start()
     {
+        SpriteRenderer spriteRenderer = tilePrefab.GetComponent<SpriteRenderer>();
+        tileSize = spriteRenderer.bounds.size; // tileSize を初期化
         grid = new Piece[width, height];
         StartCoroutine(GenerateGrid());
     }
 
     IEnumerator GenerateGrid()
     {
-        SpriteRenderer spriteRenderer = tilePrefab.GetComponent<SpriteRenderer>();
-        Vector2 tileSize = spriteRenderer.bounds.size;
-
         Vector2 gridSize = new Vector2(tileSize.x * width, tileSize.y * height);
         Vector2 gridOrigin = startPosition - gridSize / 2;
 
@@ -50,12 +50,7 @@ public class GridManager : MonoBehaviour
                 var pieceComponent = piece.GetComponent<Piece>();
 
                 // 変更箇所: ランダムなElementTypeの選択
-                // HydroxideIon を削除し、Oxygen を OxygenIon に変更
                 Piece.ElementType randomType = (Piece.ElementType)Random.Range(0, 3);
-                if (randomType == Piece.ElementType.OxygenIon)
-                {
-                    randomType = Piece.ElementType.OxygenIon;
-                }
                 pieceComponent.SetElementType(randomType);
 
                 grid[x, y] = pieceComponent;
@@ -74,11 +69,14 @@ public class GridManager : MonoBehaviour
 
     public void SetActiveArea(Vector2Int center)
     {
+        // クリック位置を右に2マス、上に4マス移動
+        Vector2Int adjustedCenter = new Vector2Int(center.x + 2, center.y + 4);
+
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                bool isActive = Mathf.Abs(x - center.x) <= 1 && Mathf.Abs(y - center.y) <= 1;
+                bool isActive = Mathf.Abs(x - adjustedCenter.x) <= 1 && Mathf.Abs(y - adjustedCenter.y) <= 1;
                 grid[x, y].SetActive(isActive);
             }
         }
@@ -94,7 +92,6 @@ public class GridManager : MonoBehaviour
             }
         }
     }
-
 
     public bool IsAdjacent(Vector2Int pos1, Vector2Int pos2)
     {
