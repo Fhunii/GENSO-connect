@@ -4,19 +4,17 @@ using System.Collections.Generic;
 
 public class Piece : MonoBehaviour
 {
-    public enum ElementType { HydrogenIon, HydroxideIon, Carbon, Oxygen }
-    
+    public enum ElementType { HydrogenIon, Carbon, OxygenIon } // エレメントタイプを修正
+
     public ElementType elementType;
 
     public Sprite hydrogenIonSprite;
-    public Sprite hydroxideIonSprite;
     public Sprite carbonSprite;
-    public Sprite oxygenSprite;
-    
+    public Sprite oxygenIonSprite; // オキシゲンイオンのスプライト
+
     public Sprite hydrogenIonMonoSprite;
-    public Sprite hydroxideIonMonoSprite;
     public Sprite carbonMonoSprite;
-    public Sprite oxygenMonoSprite;
+    public Sprite oxygenIonMonoSprite; // オキシゲンイオンのモノクロスプライト
 
     private SpriteRenderer spriteRenderer;
 
@@ -79,17 +77,15 @@ public class Piece : MonoBehaviour
             true => elementType switch
             {
                 ElementType.HydrogenIon => hydrogenIonSprite,
-                ElementType.HydroxideIon => hydroxideIonSprite,
                 ElementType.Carbon => carbonSprite,
-                ElementType.Oxygen => oxygenSprite,
+                ElementType.OxygenIon => oxygenIonSprite, // オキシゲンイオンのスプライトに対応
                 _ => spriteRenderer.sprite
             },
             false => elementType switch
             {
                 ElementType.HydrogenIon => hydrogenIonMonoSprite,
-                ElementType.HydroxideIon => hydroxideIonMonoSprite,
                 ElementType.Carbon => carbonMonoSprite,
-                ElementType.Oxygen => oxygenMonoSprite,
+                ElementType.OxygenIon => oxygenIonMonoSprite, // オキシゲンイオンのモノクロスプライトに対応
                 _ => spriteRenderer.sprite
             }
         };
@@ -227,12 +223,10 @@ public class Piece : MonoBehaviour
         {
             return false;
         }
-        return (elementType == ElementType.HydrogenIon && otherPiece.elementType == ElementType.HydroxideIon) ||
-               (elementType == ElementType.HydroxideIon && otherPiece.elementType == ElementType.HydrogenIon) ||
-               (elementType == ElementType.Carbon && otherPiece.elementType == ElementType.Oxygen) ||
-               (elementType == ElementType.Oxygen && otherPiece.elementType == ElementType.Carbon) ||
-               (elementType == ElementType.HydroxideIon && otherPiece.elementType == ElementType.Oxygen) ||
-               (elementType == ElementType.Oxygen && otherPiece.elementType == ElementType.HydroxideIon);
+        return (elementType == ElementType.HydrogenIon && otherPiece.elementType == ElementType.OxygenIon) ||
+               (elementType == ElementType.OxygenIon && otherPiece.elementType == ElementType.HydrogenIon) ||
+               (elementType == ElementType.Carbon && otherPiece.elementType == ElementType.OxygenIon) ||
+               (elementType == ElementType.OxygenIon && otherPiece.elementType == ElementType.Carbon);
     }
 
     public Vector2Int GetGridPosition()
