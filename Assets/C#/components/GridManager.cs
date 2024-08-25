@@ -95,6 +95,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
+
     public bool IsAdjacent(Vector2Int pos1, Vector2Int pos2)
     {
         return (Mathf.Abs(pos1.x - pos2.x) + Mathf.Abs(pos1.y - pos2.y)) == 1;
