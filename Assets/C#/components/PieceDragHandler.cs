@@ -1,104 +1,95 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class PieceDragHandler : MonoBehaviour
 {
-    public LineRenderer lineRenderer;
+    private Camera mainCamera;
     private List<Piece> connectedPieces = new List<Piece>();
-    private Vector2Int lastPosition;
-    private GridManager gridManager;
-    private bool isDragging;
+    private LineRenderer lineRenderer;
+    private bool isDragging = false;
 
-    void Start()
+    void Awake()
     {
-        gridManager = FindObjectOfType<GridManager>();
+        mainCamera = Camera.main;
+        lineRenderer = gameObject.AddComponent<LineRenderer>();
+        lineRenderer.startWidth = 0.1f;
+        lineRenderer.endWidth = 0.1f;
+        lineRenderer.positionCount = 0;
+        // 線の色を背景に対して目立つ色に変更（例えば、赤色）
+        lineRenderer.material = new Material(Shader.Find("Sprites/Default")) { color = Color.red };
+    }
+
+    void Update()
+    {
+        if (isDragging)
+        {
+            Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            mousePosition.z = -1.8f;
+
+            if (connectedPieces.Count > 0)
+            {
+                lineRenderer.positionCount = connectedPieces.Count + 1;
+                for (int i = 0; i < connectedPieces.Count; i++)
+                {
+                    lineRenderer.SetPosition(i, connectedPieces[i].transform.position);
+                }
+                lineRenderer.SetPosition(connectedPieces.Count, mousePosition);
+            }
+        }
+
+        if (Input.GetMouseButtonUp(0) && isDragging)
+        {
+            isDragging = false;
+            CheckConnections();
+        }
     }
 
     void OnMouseDown()
     {
-        isDragging = true;
-        connectedPieces.Clear();
-        lastPosition = GetGridPosition(transform.position);
-        AddPieceToConnectedList(transform.GetComponent<Piece>());
+        Piece piece = GetPieceUnderMouse();
+        if (piece != null)
+        {
+            connectedPieces.Clear();
+            connectedPieces.Add(piece);
+            isDragging = true;
+        }
     }
 
     void OnMouseDrag()
     {
-        if (isDragging)
+        Piece piece = GetPieceUnderMouse();
+        if (piece != null && !connectedPieces.Contains(piece))
         {
-            Vector2Int currentPosition = GetGridPosition(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-            if (gridManager.IsAdjacent(lastPosition, currentPosition))
+            Piece lastPiece = connectedPieces[connectedPieces.Count - 1];
+            if (lastPiece.CanConnect(piece))
             {
-                Piece piece = gridManager.grid[currentPosition.x, currentPosition.y];
-                if (piece != null && !connectedPieces.Contains(piece) && piece.GetComponent<SpriteRenderer>().color != Color.black)
-                {
-                    AddPieceToConnectedList(piece);
-                    lastPosition = currentPosition;
-                }
+                connectedPieces.Add(piece);
             }
         }
     }
 
-    void OnMouseUp()
+    void CheckConnections()
     {
-        isDragging = false;
-
-        if (connectedPieces.Count > 0)
+        if (connectedPieces.Count > 1)
         {
-            // チェックして消去するかどうか決定する
-            if (CheckIfValidCompound(connectedPieces))
+            foreach (Piece piece in connectedPieces)
             {
-                foreach (var piece in connectedPieces)
-                {
-                    Destroy(piece.gameObject);
-                }
-            }
-            else
-            {
-                // 無効な場合は青い線を消去する
-                if (lineRenderer != null)
-                {
-                    lineRenderer.positionCount = 0;
-                }
+                piece.DestroyWithEffect();
             }
         }
+
+        connectedPieces.Clear();
+        lineRenderer.positionCount = 0;
     }
 
-    private void AddPieceToConnectedList(Piece piece)
+    Piece GetPieceUnderMouse()
     {
-        connectedPieces.Add(piece);
-        lineRenderer.positionCount = connectedPieces.Count;
-        lineRenderer.SetPosition(connectedPieces.Count - 1, piece.transform.position);
-    }
-
-    private Vector2Int GetGridPosition(Vector3 worldPosition)
-    {
-        Vector2Int gridPosition = new Vector2Int(
-            Mathf.RoundToInt((worldPosition.x - gridManager.startPosition.x) / gridManager.tileSize.x),
-            Mathf.RoundToInt((worldPosition.y - gridManager.startPosition.y) / gridManager.tileSize.y)
-        );
-        return gridPosition;
-    }
-
-    private bool CheckIfValidCompound(List<Piece> pieces)
-    {
-        Dictionary<Piece.ElementType, int> elementCounts = new Dictionary<Piece.ElementType, int>();
-        foreach (var piece in pieces)
+        Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero);
+        if (hit.collider != null)
         {
-            Piece.ElementType type = piece.GetElementType();
-            if (!elementCounts.ContainsKey(type))
-            {
-                elementCounts[type] = 0;
-            }
-            elementCounts[type]++;
+            return hit.collider.GetComponent<Piece>();
         }
-
-        return ValidateCompound(elementCounts);
-    }
-
-    private bool ValidateCompound(Dictionary<Piece.ElementType, int> elementCounts)
-    {
-        // ここに化合物の検証ロジックを実装する
-        return false; // デフォルトで無効とする
+        return null;
     }
 }
