@@ -279,11 +279,29 @@ public class Piece : MonoBehaviour
 
     public void DestroyWithEffect()
     {
+        // エフェクトを生成する
         if (sparkleEffectPrefab != null)
         {
             Instantiate(sparkleEffectPrefab, transform.position, Quaternion.identity);
         }
+
+        // 自身の削除
         Destroy(gameObject);
+
+        // 自身に接続されたすべての青い線を削除
+        List<LineRenderer> linesToRemove = new List<LineRenderer>();
+        foreach (var line in allLines)
+        {
+            if (line != null && (line.GetPosition(0) == transform.position || line.GetPosition(1) == transform.position))
+            {
+                linesToRemove.Add(line);
+            }
+        }
+        foreach (var line in linesToRemove)
+        {
+            allLines.Remove(line);
+            Destroy(line.gameObject);
+        }
     }
 
     private Vector2Int GetGridPosition()
