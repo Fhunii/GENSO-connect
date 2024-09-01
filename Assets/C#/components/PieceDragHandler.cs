@@ -5,11 +5,18 @@ public class PieceDragHandler : MonoBehaviour
 {
     private Camera mainCamera;
     private List<Piece> connectedPieces = new List<Piece>();
+    private LineRenderer lineRenderer;
     private bool isDragging = false;
 
     void Awake()
     {
         mainCamera = Camera.main;
+        lineRenderer = gameObject.AddComponent<LineRenderer>();
+        lineRenderer.startWidth = 0.1f;
+        lineRenderer.endWidth = 0.1f;
+        lineRenderer.positionCount = 0;
+        // 線の色を背景に対して目立つ色に変更（例えば、青色）
+        lineRenderer.material = new Material(Shader.Find("Sprites/Default")) { color = Color.blue };
     }
 
     void Update()
@@ -21,7 +28,12 @@ public class PieceDragHandler : MonoBehaviour
 
             if (connectedPieces.Count > 0)
             {
-                // 赤い線の描画はPieceクラスに任せる
+                lineRenderer.positionCount = connectedPieces.Count + 1;
+                for (int i = 0; i < connectedPieces.Count; i++)
+                {
+                    lineRenderer.SetPosition(i, connectedPieces[i].transform.position);
+                }
+                lineRenderer.SetPosition(connectedPieces.Count, mousePosition);
             }
         }
 
@@ -49,9 +61,9 @@ public class PieceDragHandler : MonoBehaviour
         if (piece != null && !connectedPieces.Contains(piece))
         {
             Piece lastPiece = connectedPieces[connectedPieces.Count - 1];
+            
             connectedPieces.Add(piece);
-            piece.SetActive(false); // モノクロにする
-            lastPiece.SetActive(false); // モノクロにする
+            
         }
     }
 
@@ -61,11 +73,12 @@ public class PieceDragHandler : MonoBehaviour
         {
             foreach (Piece piece in connectedPieces)
             {
-                piece.DestroyWithEffect();
+                piece.SetActive(false); // モノクロにする
             }
         }
 
         connectedPieces.Clear();
+        lineRenderer.positionCount = 0;
     }
 
     Piece GetPieceUnderMouse()
