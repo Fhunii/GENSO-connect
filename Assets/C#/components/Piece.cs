@@ -32,51 +32,29 @@ public class Piece : MonoBehaviour
 
     private GridManager gridManager;
     private bool isActive = true;
+    private static ScoreManager scoreManager;
 
-    private static List<List<ElementType>> validCombinations = new List<List<ElementType>>()
+    // 化合物ごとのスコアを設定
+    private static Dictionary<List<ElementType>, int> compoundScores = new Dictionary<List<ElementType>, int>()
     {
-        // メタン (CH₄)
-        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon },
-
-        // 一酸化炭素 (CO)
-        new List<ElementType> { ElementType.Carbon, ElementType.OxygenIon },
-
-        // 二酸化炭素 (CO₂)
-        new List<ElementType> { ElementType.Carbon, ElementType.OxygenIon, ElementType.OxygenIon },
-
-        // 水 (H₂O)
-        new List<ElementType> { ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon },
-
-        // メタノール (CH₃OH)
-        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon },
-
-        // ホルムアルデヒド (H₂CO)
-        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon },
-
-        // ギ酸 (HCOOH)
-        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon },
-
-        // 酢酸 (CH₃COOH)
-        new List<ElementType> { ElementType.Carbon, ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon },
-
-        // 炭酸 (H₂CO₃)
-        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon, ElementType.OxygenIon },
-
-        // 炭酸水素イオン (HCO₃⁻)
-        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon, ElementType.OxygenIon },
-
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon }, 10 }, // メタン (CH₄)
+        { new List<ElementType> { ElementType.Carbon, ElementType.OxygenIon }, 15 }, // 一酸化炭素 (CO)
+        { new List<ElementType> { ElementType.Carbon, ElementType.OxygenIon, ElementType.OxygenIon }, 20 }, // 二酸化炭素 (CO₂)
+        { new List<ElementType> { ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon }, 25 }, // 水 (H₂O)
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon }, 30 }, // メタノール (CH₃OH)
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon }, 35 }, // ホルムアルデヒド (H₂CO)
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon }, 40 }, // ギ酸 (HCOOH)
+        { new List<ElementType> { ElementType.Carbon, ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon }, 45 }, // 酢酸 (CH₃COOH)
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon, ElementType.OxygenIon }, 50 }, // 炭酸 (H₂CO₃)
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon, ElementType.OxygenIon }, 55 }, // 炭酸水素イオン (HCO₃⁻)
         // 他の組み合わせもここに追加する
     };
-
-    public ElementType GetElementType()
-    {
-        return elementType;
-    }
 
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         gridManager = FindObjectOfType<GridManager>();
+        scoreManager = FindObjectOfType<ScoreManager>(); // ScoreManager の参照を取得
     }
 
     void Start()
@@ -109,10 +87,7 @@ public class Piece : MonoBehaviour
 
     private void UpdateSprite()
     {
-        if (spriteRenderer == null)
-        {
-            return;
-        }
+        if (spriteRenderer == null) return;
 
         spriteRenderer.sprite = isActive switch
         {
@@ -141,7 +116,7 @@ public class Piece : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (!isActive) return;  // モノクロの場合は処理しない
+        if (!isActive) return; // モノクロの場合は処理しない
 
         isDragging = true;
         connectedPieces.Clear();
@@ -154,9 +129,8 @@ public class Piece : MonoBehaviour
         {
             gridManager.SetActiveArea(gridPosition);
         }
-
-        // 赤い線の削除は不要なため、ここで処理なし
     }
+
     void OnMouseDrag()
     {
         if (!isDragging) return;
@@ -168,15 +142,12 @@ public class Piece : MonoBehaviour
         if (hit.collider != null)
         {
             Piece hitPiece = hit.collider.GetComponent<Piece>();
-            // モノクロではないスプライトにのみ接続する
             if (hitPiece != null && hitPiece.isActive && hitPiece != lastConnectedPiece)
             {
-                // 青い線を生成してスプライト同士を接続
                 LineRenderer blueLine = CreateLine(lastConnectedPiece.transform.position, hitPiece.transform.position);
                 allLines.Add(blueLine);
 
                 lastConnectedPiece = hitPiece;
-
                 connectedPieces.Add(hitPiece);
                 hitPiece.SetActive(false); // isActive プロパティを変更しモノクロにする
             }
@@ -189,7 +160,7 @@ public class Piece : MonoBehaviour
         LineRenderer lineRenderer = lineObj.GetComponent<LineRenderer>();
         lineRenderer.SetPosition(0, startPosition);
         lineRenderer.SetPosition(1, endPosition);
-        lineRenderer.startColor = Color.blue; // 線の色を青に設定
+        lineRenderer.startColor = Color.blue;
         lineRenderer.endColor = Color.blue;
         return lineRenderer;
     }
@@ -200,8 +171,7 @@ public class Piece : MonoBehaviour
 
         isDragging = false;
 
-        // 消去のタイミングで接続の有効性を判定
-        bool validCompound = CheckIfValidCompound();
+        bool validCompound = CheckIfValidCompound(out List<ElementType> matchedCompound);
 
         if (validCompound)
         {
@@ -211,6 +181,13 @@ public class Piece : MonoBehaviour
                 {
                     piece.DestroyWithEffect();
                 }
+            }
+
+            // スコアの追加
+            if (matchedCompound != null && compoundScores.ContainsKey(matchedCompound))
+            {
+                int scoreToAdd = compoundScores[matchedCompound];
+                scoreManager.AddScore(scoreToAdd);
             }
         }
         else
@@ -230,8 +207,7 @@ public class Piece : MonoBehaviour
         gridManager.ResetActiveArea();
     }
 
-    // 接続の有効性を判定
-    private bool CheckIfValidCompound()
+    private bool CheckIfValidCompound(out List<ElementType> matchedCompound)
     {
         var elementCounts = new Dictionary<ElementType, int>();
         foreach (var piece in connectedPieces)
@@ -246,7 +222,7 @@ public class Piece : MonoBehaviour
             }
         }
 
-        foreach (var combination in validCombinations)
+        foreach (var combination in compoundScores.Keys)
         {
             var tempCounts = new Dictionary<ElementType, int>(elementCounts);
 
@@ -270,14 +246,16 @@ public class Piece : MonoBehaviour
 
             if (isMatch && tempCounts.Count == 0)
             {
+                matchedCompound = combination;
                 return true;
             }
         }
 
+        matchedCompound = null;
         return false;
     }
 
-        public void DestroyWithEffect()
+    public void DestroyWithEffect()
     {
         // エフェクトを生成する
         if (sparkleEffectPrefab != null)
@@ -313,6 +291,7 @@ public class Piece : MonoBehaviour
             Destroy(line.gameObject);
         }
     }
+
 
 
     private Vector2Int GetGridPosition()
