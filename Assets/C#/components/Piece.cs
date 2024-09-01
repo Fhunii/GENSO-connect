@@ -35,7 +35,6 @@ public class Piece : MonoBehaviour
 
     private static List<List<ElementType>> validCombinations = new List<List<ElementType>>()
     {
-        new List<ElementType> { ElementType.HydrogenIon, ElementType.Carbon, ElementType.OxygenIon }, // 例: H2O
         // メタン (CH₄)
         new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon },
 
@@ -155,8 +154,9 @@ public class Piece : MonoBehaviour
         {
             gridManager.SetActiveArea(gridPosition);
         }
-    }
 
+        // 赤い線の削除は不要なため、ここで処理なし
+    }
     void OnMouseDrag()
     {
         if (!isDragging) return;
@@ -171,9 +171,9 @@ public class Piece : MonoBehaviour
             // モノクロではないスプライトにのみ接続する
             if (hitPiece != null && hitPiece.isActive && hitPiece != lastConnectedPiece)
             {
-                // 線を生成してスプライト同士を接続
-                LineRenderer line = CreateLine(lastConnectedPiece.transform.position, hitPiece.transform.position);
-                allLines.Add(line);
+                // 青い線を生成してスプライト同士を接続
+                LineRenderer blueLine = CreateLine(lastConnectedPiece.transform.position, hitPiece.transform.position);
+                allLines.Add(blueLine);
 
                 lastConnectedPiece = hitPiece;
 
