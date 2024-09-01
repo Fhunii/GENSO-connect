@@ -150,6 +150,9 @@ public class Piece : MonoBehaviour
                 lastConnectedPiece = hitPiece;
                 connectedPieces.Add(hitPiece);
                 hitPiece.SetActive(false); // isActive プロパティを変更しモノクロにする
+
+                // クリックされたスプライトもモノクロにする
+                SetActive(false);
             }
         }
     }
@@ -199,6 +202,15 @@ public class Piece : MonoBehaviour
                     Destroy(line.gameObject);
                 }
             }
+
+            // すべてのスプライトを有効に戻す
+            foreach (var piece in connectedPieces)
+            {
+                if (piece != null)
+                {
+                    piece.SetActive(true);
+                }
+            }
         }
 
         connectedPieces.Clear();
@@ -206,7 +218,6 @@ public class Piece : MonoBehaviour
 
         gridManager.ResetActiveArea();
     }
-
     private bool CheckIfValidCompound(out List<ElementType> matchedCompound)
     {
         var elementCounts = new Dictionary<ElementType, int>();

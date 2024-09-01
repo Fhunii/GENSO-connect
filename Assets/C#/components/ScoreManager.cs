@@ -20,7 +20,7 @@ public class ScoreManager : MonoBehaviour
 
     private void UpdateScoreText()
     {
-        scoreText.text = "Score: " + currentScore;
+        scoreText.text = "" + currentScore; // ToString()を使わずに文字列に変換 score:を追加
     }
 
     public void ResetScore()
