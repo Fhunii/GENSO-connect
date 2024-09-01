@@ -277,12 +277,22 @@ public class Piece : MonoBehaviour
         return false;
     }
 
-    public void DestroyWithEffect()
+        public void DestroyWithEffect()
     {
         // エフェクトを生成する
         if (sparkleEffectPrefab != null)
         {
-            Instantiate(sparkleEffectPrefab, transform.position, Quaternion.identity);
+            GameObject effect = Instantiate(sparkleEffectPrefab, transform.position, Quaternion.identity);
+            
+            // パーティクルシステムを取得し再生
+            ParticleSystem particleSystem = effect.GetComponent<ParticleSystem>();
+            if (particleSystem != null)
+            {
+                particleSystem.Play();
+            }
+
+            // 一定時間後にエフェクトオブジェクトを削除
+            Destroy(effect, particleSystem.main.duration + particleSystem.main.startLifetime.constantMax);
         }
 
         // 自身の削除
@@ -303,6 +313,7 @@ public class Piece : MonoBehaviour
             Destroy(line.gameObject);
         }
     }
+
 
     private Vector2Int GetGridPosition()
     {
