@@ -4,7 +4,10 @@ using System.Collections.Generic;
 
 public class Piece : MonoBehaviour
 {
-    public enum ElementType { HydrogenIon, Carbon, OxygenIon }
+    public enum ElementType
+    {
+        HydrogenIon, Carbon, OxygenIon
+    }
 
     public ElementType elementType;
 
@@ -25,7 +28,7 @@ public class Piece : MonoBehaviour
     private static Piece lastConnectedPiece;
     private static Piece firstClickedPiece;
     private static bool isDragging = false;
-    private static List<LineRenderer> blueLines = new List<LineRenderer>();
+    private static List<LineRenderer> allLines = new List<LineRenderer>();
 
     private GridManager gridManager;
     private bool isActive = true;
@@ -152,8 +155,6 @@ public class Piece : MonoBehaviour
         {
             gridManager.SetActiveArea(gridPosition);
         }
-
-        // 赤い線の削除は不要なため、ここで処理なし
     }
 
     void OnMouseDrag()
@@ -170,9 +171,9 @@ public class Piece : MonoBehaviour
             // モノクロではないスプライトにのみ接続する
             if (hitPiece != null && hitPiece.isActive && hitPiece != lastConnectedPiece)
             {
-                // 青い線を生成してスプライト同士を接続
-                LineRenderer blueLine = CreateBlueLine(lastConnectedPiece.transform.position, hitPiece.transform.position);
-                blueLines.Add(blueLine);
+                // 線を生成してスプライト同士を接続
+                LineRenderer line = CreateLine(lastConnectedPiece.transform.position, hitPiece.transform.position);
+                allLines.Add(line);
 
                 lastConnectedPiece = hitPiece;
 
@@ -182,15 +183,15 @@ public class Piece : MonoBehaviour
         }
     }
 
-    private LineRenderer CreateBlueLine(Vector3 startPosition, Vector3 endPosition)
+    private LineRenderer CreateLine(Vector3 startPosition, Vector3 endPosition)
     {
         GameObject lineObj = Instantiate(linePrefab);
-        LineRenderer blueLine = lineObj.GetComponent<LineRenderer>();
-        blueLine.SetPosition(0, startPosition);
-        blueLine.SetPosition(1, endPosition);
-        blueLine.startColor = Color.blue;
-        blueLine.endColor = Color.blue;
-        return blueLine;
+        LineRenderer lineRenderer = lineObj.GetComponent<LineRenderer>();
+        lineRenderer.SetPosition(0, startPosition);
+        lineRenderer.SetPosition(1, endPosition);
+        lineRenderer.startColor = Color.blue; // 線の色を青に設定
+        lineRenderer.endColor = Color.blue;
+        return lineRenderer;
     }
 
     void OnMouseUp()
@@ -201,7 +202,7 @@ public class Piece : MonoBehaviour
 
         // 消去のタイミングで接続の有効性を判定
         bool validCompound = CheckIfValidCompound();
-        
+
         if (validCompound)
         {
             foreach (var piece in connectedPieces)
@@ -214,14 +215,17 @@ public class Piece : MonoBehaviour
         }
         else
         {
-            foreach (var blueLine in blueLines)
+            foreach (var line in allLines)
             {
-                Destroy(blueLine.gameObject);
+                if (line != null)
+                {
+                    Destroy(line.gameObject);
+                }
             }
         }
 
         connectedPieces.Clear();
-        blueLines.Clear();
+        allLines.Clear();
 
         gridManager.ResetActiveArea();
     }
