@@ -147,21 +147,19 @@ public class Piece : MonoBehaviour
         if (hit.collider != null)
         {
             Piece hitPiece = hit.collider.GetComponent<Piece>();
-            // 接続可能かの判定は行わず、接続できるなら接続
             if (hitPiece != null && hitPiece.isActive && hitPiece != lastConnectedPiece)
             {
                 LineRenderer blueLine = CreateBlueLine(lastConnectedPiece.transform.position, hitPiece.transform.position);
                 blueLines.Add(blueLine);
 
                 lastConnectedPiece = hitPiece;
-
                 if (currentRedLine != null)
                 {
                     currentRedLine.SetPosition(0, lastConnectedPiece.transform.position);
                 }
 
                 connectedPieces.Add(hitPiece);
-                hitPiece.SetActive(false); // isActive プロパティを変更
+                hitPiece.SetActive(false);
             }
         }
 
@@ -192,7 +190,6 @@ public class Piece : MonoBehaviour
 
         isDragging = false;
 
-        // 消去のタイミングで接続の有効性を判定
         bool validCompound = CheckIfValidCompound();
         
         if (validCompound)
@@ -225,7 +222,6 @@ public class Piece : MonoBehaviour
         gridManager.ResetActiveArea();
     }
 
-    // 接続の有効性を判定
     private bool CheckIfValidCompound()
     {
         var elementCounts = new Dictionary<ElementType, int>();
