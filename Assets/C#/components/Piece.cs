@@ -1,9 +1,11 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class Piece : MonoBehaviour
 {
+    private CountdownManager countdownManager;
     public enum ElementType
     {
         HydrogenIon, Carbon, OxygenIon
@@ -61,6 +63,12 @@ public class Piece : MonoBehaviour
     {
         transform.localScale = Vector3.zero;
         StartCoroutine(AnimatePieceAppearance());
+        countdownManager = FindObjectOfType<CountdownManager>();
+        if (countdownManager != null && countdownManager.IsCountdownActive())
+        {
+            // カウントダウン中はこのスクリプトを無効にする
+            this.enabled = false;
+        }
     }
 
     private IEnumerator AnimatePieceAppearance()
@@ -116,6 +124,10 @@ public class Piece : MonoBehaviour
 
     void OnMouseDown()
     {
+        if (countdownManager != null && countdownManager.IsCountdownActive())
+        {
+            return; // カウントダウン中は処理を行わない
+        }
         if (!isActive) return; // モノクロの場合は処理しない
 
         isDragging = true;
@@ -133,6 +145,10 @@ public class Piece : MonoBehaviour
 
     void OnMouseDrag()
     {
+        if (countdownManager != null && countdownManager.IsCountdownActive())
+        {
+            return; // カウントダウン中は処理を行わない
+        }
         if (!isDragging) return;
 
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -159,6 +175,7 @@ public class Piece : MonoBehaviour
 
     private LineRenderer CreateLine(Vector3 startPosition, Vector3 endPosition)
     {
+        
         GameObject lineObj = Instantiate(linePrefab);
         LineRenderer lineRenderer = lineObj.GetComponent<LineRenderer>();
         lineRenderer.SetPosition(0, startPosition);
@@ -170,6 +187,10 @@ public class Piece : MonoBehaviour
 
     void OnMouseUp()
     {
+        if (countdownManager != null && countdownManager.IsCountdownActive())
+        {
+            return; // カウントダウン中は処理を行わない
+        }
         if (!isDragging) return;
 
         isDragging = false;
@@ -309,4 +330,10 @@ public class Piece : MonoBehaviour
     {
         return new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
     }
+
+    internal void SetInteractive(bool enable)
+    {
+        throw new NotImplementedException();
+    }
+
 }
