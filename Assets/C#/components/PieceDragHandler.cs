@@ -61,10 +61,9 @@ public class PieceDragHandler : MonoBehaviour
         if (piece != null && !connectedPieces.Contains(piece))
         {
             Piece lastPiece = connectedPieces[connectedPieces.Count - 1];
-            if (lastPiece.CanConnect(piece))
-            {
-                connectedPieces.Add(piece);
-            }
+            
+            connectedPieces.Add(piece);
+            
         }
     }
 

@@ -147,7 +147,8 @@ public class Piece : MonoBehaviour
         if (hit.collider != null)
         {
             Piece hitPiece = hit.collider.GetComponent<Piece>();
-            if (hitPiece != null && hitPiece.isActive && hitPiece != lastConnectedPiece && CanConnect(hitPiece))
+            // 接続可能かの判定は行わず、接続できるなら接続
+            if (hitPiece != null && hitPiece.isActive && hitPiece != lastConnectedPiece)
             {
                 LineRenderer blueLine = CreateBlueLine(lastConnectedPiece.transform.position, hitPiece.transform.position);
                 blueLines.Add(blueLine);
@@ -191,6 +192,7 @@ public class Piece : MonoBehaviour
 
         isDragging = false;
 
+        // 消去のタイミングで接続の有効性を判定
         bool validCompound = CheckIfValidCompound();
         
         if (validCompound)
@@ -223,19 +225,7 @@ public class Piece : MonoBehaviour
         gridManager.ResetActiveArea();
     }
 
-    public bool CanConnect(Piece otherPiece)
-    {
-        if (!isActive || !otherPiece.isActive)
-        {
-            return false;
-        }
-
-        return (elementType != ElementType.HydrogenIon || otherPiece.elementType != ElementType.OxygenIon) &&
-               (elementType != ElementType.OxygenIon || otherPiece.elementType != ElementType.HydrogenIon) &&
-               (elementType != ElementType.Carbon || otherPiece.elementType != ElementType.OxygenIon) &&
-               (elementType != ElementType.OxygenIon || otherPiece.elementType != ElementType.Carbon);
-    }
-
+    // 接続の有効性を判定
     private bool CheckIfValidCompound()
     {
         var elementCounts = new Dictionary<ElementType, int>();
