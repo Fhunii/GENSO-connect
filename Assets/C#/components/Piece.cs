@@ -30,38 +30,38 @@ public class Piece : MonoBehaviour
     private GridManager gridManager;
     private bool isActive = true;
 
-    private List<List<Piece.ElementType>> validCombinations = new List<List<Piece.ElementType>>()
+    private static List<List<ElementType>> validCombinations = new List<List<ElementType>>()
     {
-        new List<Piece.ElementType> { Piece.ElementType.HydrogenIon, Piece.ElementType.Carbon, Piece.ElementType.OxygenIon }, // 例: H2O
+        new List<ElementType> { ElementType.HydrogenIon, ElementType.Carbon, ElementType.OxygenIon }, // 例: H2O
         // メタン (CH₄)
-        new List<Piece.ElementType> { Piece.ElementType.Carbon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon },
+        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon },
 
         // 一酸化炭素 (CO)
-        new List<Piece.ElementType> { Piece.ElementType.Carbon, Piece.ElementType.OxygenIon },
+        new List<ElementType> { ElementType.Carbon, ElementType.OxygenIon },
 
         // 二酸化炭素 (CO₂)
-        new List<Piece.ElementType> { Piece.ElementType.Carbon, Piece.ElementType.OxygenIon, Piece.ElementType.OxygenIon },
+        new List<ElementType> { ElementType.Carbon, ElementType.OxygenIon, ElementType.OxygenIon },
 
         // 水 (H₂O)
-        new List<Piece.ElementType> { Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.OxygenIon },
+        new List<ElementType> { ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon },
 
         // メタノール (CH₃OH)
-        new List<Piece.ElementType> { Piece.ElementType.Carbon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.OxygenIon },
+        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon },
 
         // ホルムアルデヒド (H₂CO)
-        new List<Piece.ElementType> { Piece.ElementType.Carbon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.OxygenIon },
+        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon },
 
         // ギ酸 (HCOOH)
-        new List<Piece.ElementType> { Piece.ElementType.Carbon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.OxygenIon, Piece.ElementType.OxygenIon },
+        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon },
 
         // 酢酸 (CH₃COOH)
-        new List<Piece.ElementType> { Piece.ElementType.Carbon, Piece.ElementType.Carbon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.OxygenIon, Piece.ElementType.OxygenIon },
+        new List<ElementType> { ElementType.Carbon, ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon },
 
         // 炭酸 (H₂CO₃)
-        new List<Piece.ElementType> { Piece.ElementType.Carbon, Piece.ElementType.HydrogenIon, Piece.ElementType.HydrogenIon, Piece.ElementType.OxygenIon, Piece.ElementType.OxygenIon, Piece.ElementType.OxygenIon },
+        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon, ElementType.OxygenIon },
 
         // 炭酸水素イオン (HCO₃⁻)
-        new List<Piece.ElementType> { Piece.ElementType.Carbon, Piece.ElementType.HydrogenIon, Piece.ElementType.OxygenIon, Piece.ElementType.OxygenIon, Piece.ElementType.OxygenIon },
+        new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon, ElementType.OxygenIon },
 
         // 他の組み合わせもここに追加する
     };
@@ -153,9 +153,7 @@ public class Piece : MonoBehaviour
             gridManager.SetActiveArea(gridPosition);
         }
 
-        // 赤い線のコードは削除しました
-
-        // 最初のクリックされたスプライトとマウスの間に青い線を引く
+        // 赤い線の削除は不要なため、ここで処理なし
     }
 
     void OnMouseDrag()
@@ -165,23 +163,21 @@ public class Piece : MonoBehaviour
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePosition.z = 0;
 
-        // 青い線を引く
-        if (lastConnectedPiece != null)
+        RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero);
+        if (hit.collider != null)
         {
-            RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero);
-            if (hit.collider != null)
+            Piece hitPiece = hit.collider.GetComponent<Piece>();
+            // モノクロではないスプライトにのみ接続する
+            if (hitPiece != null && hitPiece.isActive && hitPiece != lastConnectedPiece)
             {
-                Piece hitPiece = hit.collider.GetComponent<Piece>();
-                if (hitPiece != null && hitPiece.isActive && hitPiece != lastConnectedPiece)
-                {
-                    LineRenderer blueLine = CreateBlueLine(lastConnectedPiece.transform.position, hitPiece.transform.position);
-                    blueLines.Add(blueLine);
+                // 青い線を生成してスプライト同士を接続
+                LineRenderer blueLine = CreateBlueLine(lastConnectedPiece.transform.position, hitPiece.transform.position);
+                blueLines.Add(blueLine);
 
-                    lastConnectedPiece = hitPiece;
+                lastConnectedPiece = hitPiece;
 
-                    connectedPieces.Add(hitPiece);
-                    hitPiece.SetActive(false); // モノクロにする
-                }
+                connectedPieces.Add(hitPiece);
+                hitPiece.SetActive(false); // isActive プロパティを変更しモノクロにする
             }
         }
     }
@@ -203,12 +199,12 @@ public class Piece : MonoBehaviour
 
         isDragging = false;
 
-        // スプライトの組み合わせを検証
-        List<Piece> validCombination = GetValidCombination();
-
-        if (validCombination != null)
+        // 消去のタイミングで接続の有効性を判定
+        bool validCompound = CheckIfValidCompound();
+        
+        if (validCompound)
         {
-            foreach (var piece in validCombination)
+            foreach (var piece in connectedPieces)
             {
                 if (piece != null)
                 {
@@ -230,9 +226,10 @@ public class Piece : MonoBehaviour
         gridManager.ResetActiveArea();
     }
 
-    private List<Piece> GetValidCombination()
+    // 接続の有効性を判定
+    private bool CheckIfValidCompound()
     {
-        var elementCounts = new Dictionary<Piece.ElementType, int>();
+        var elementCounts = new Dictionary<ElementType, int>();
         foreach (var piece in connectedPieces)
         {
             if (piece != null)
@@ -245,38 +242,35 @@ public class Piece : MonoBehaviour
             }
         }
 
-        foreach (var validCombination in validCombinations)
+        foreach (var combination in validCombinations)
         {
-            var validElementCounts = new Dictionary<Piece.ElementType, int>();
-            foreach (var type in validCombination)
-            {
-                if (!validElementCounts.ContainsKey(type))
-                {
-                    validElementCounts[type] = 0;
-                }
-                validElementCounts[type]++;
-            }
+            var tempCounts = new Dictionary<ElementType, int>(elementCounts);
 
-            if (elementCounts.Count == validElementCounts.Count)
+            bool isMatch = true;
+            foreach (var element in combination)
             {
-                bool match = true;
-                foreach (var kvp in validElementCounts)
+                if (tempCounts.ContainsKey(element))
                 {
-                    if (!elementCounts.ContainsKey(kvp.Key) || elementCounts[kvp.Key] != kvp.Value)
+                    tempCounts[element]--;
+                    if (tempCounts[element] == 0)
                     {
-                        match = false;
-                        break;
+                        tempCounts.Remove(element);
                     }
                 }
-
-                if (match)
+                else
                 {
-                    return connectedPieces;
+                    isMatch = false;
+                    break;
                 }
+            }
+
+            if (isMatch && tempCounts.Count == 0)
+            {
+                return true;
             }
         }
 
-        return null;
+        return false;
     }
 
     public void DestroyWithEffect()
