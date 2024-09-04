@@ -41,7 +41,9 @@ public class Piece : MonoBehaviour
     // 化合物ごとのスコアを設定
     private static Dictionary<List<ElementType>, int> compoundScores = new Dictionary<List<ElementType>, int>()
     {
-        // 各化合物のスコア設定（省略）
+        // 各化合物のスコア設定（例）
+        { new List<ElementType> { ElementType.HydrogenIon, ElementType.Carbon, ElementType.OxygenIon }, 10 },
+        // 他の化合物とスコア設定
     };
 
     void Awake()
@@ -199,8 +201,8 @@ public class Piece : MonoBehaviour
             {
                 if (piece != null)
                 {
+                    Debug.Log($"Destroying piece: {piece.name}");
                     piece.DestroyWithEffect();
-                    Debug.Log($"Destroyed {piece.elementType}");
                 }
             }
 
@@ -287,12 +289,13 @@ public class Piece : MonoBehaviour
 
     public void DestroyWithEffect()
     {
+        // 消去されたスプライトの位置を保存する
+        destroyedPositions.Add(transform.position);
+
         // エフェクトを生成する
         if (sparkleEffectPrefab != null)
         {
             GameObject effect = Instantiate(sparkleEffectPrefab, transform.position, Quaternion.identity);
-            
-            // パーティクルシステムを取得し再生
             ParticleSystem particleSystem = effect.GetComponent<ParticleSystem>();
             if (particleSystem != null)
             {
@@ -300,11 +303,13 @@ public class Piece : MonoBehaviour
                 Destroy(effect, particleSystem.main.duration);
             }
         }
-
-        // 消去されたスプライトの位置を保存
-        destroyedPositions.Add(transform.position);
+        else
+        {
+            Debug.LogWarning("Sparkle effect prefab is not assigned.");
+        }
 
         // スプライトを消去する
+        Debug.Log("Destroying piece: " + gameObject.name);
         Destroy(gameObject);
     }
 
