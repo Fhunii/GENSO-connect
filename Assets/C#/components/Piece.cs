@@ -324,15 +324,14 @@ public class Piece : MonoBehaviour
             GameObject newPieceObj = Instantiate(gameObject, position, Quaternion.identity);
             Piece newPiece = newPieceObj.GetComponent<Piece>();
             newPiece.SetElementType(randomElement);
-            newPiece.SetActive(true);
         }
 
-        // リストをクリア
         destroyedPositions.Clear();
     }
 
     private Vector2Int GetGridPosition()
     {
         return new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
+
     }
 }
