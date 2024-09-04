@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class Piece : MonoBehaviour
 {
@@ -35,15 +36,20 @@ public class Piece : MonoBehaviour
     private bool isActive = true;
     private static ScoreManager scoreManager;
 
-    // 消去されたスプライトの位置を保存するリスト
-    private static List<Vector2> destroyedPositions = new List<Vector2>();
-
     // 化合物ごとのスコアを設定
     private static Dictionary<List<ElementType>, int> compoundScores = new Dictionary<List<ElementType>, int>()
     {
-        // 各化合物のスコア設定（例）
-        { new List<ElementType> { ElementType.HydrogenIon, ElementType.Carbon, ElementType.OxygenIon }, 10 },
-        // 他の化合物とスコア設定
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon }, 10 }, // メタン (CH₄)
+        { new List<ElementType> { ElementType.Carbon, ElementType.OxygenIon }, 15 }, // 一酸化炭素 (CO)
+        { new List<ElementType> { ElementType.Carbon, ElementType.OxygenIon, ElementType.OxygenIon }, 20 }, // 二酸化炭素 (CO₂)
+        { new List<ElementType> { ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon }, 25 }, // 水 (H₂O)
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon }, 30 }, // メタノール (CH₃OH)
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon }, 35 }, // ホルムアルデヒド (H₂CO)
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon }, 40 }, // ギ酸 (HCOOH)
+        { new List<ElementType> { ElementType.Carbon, ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon }, 45 }, // 酢酸 (CH₃COOH)
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon, ElementType.OxygenIon }, 50 }, // 炭酸 (H₂CO₃)
+        { new List<ElementType> { ElementType.Carbon, ElementType.HydrogenIon, ElementType.OxygenIon, ElementType.OxygenIon, ElementType.OxygenIon }, 55 }, // 炭酸水素イオン (HCO₃⁻)
+        // 他の組み合わせもここに追加する
     };
 
     void Awake()
@@ -62,11 +68,6 @@ public class Piece : MonoBehaviour
         {
             // カウントダウン中はこのスクリプトを無効にする
             this.enabled = false;
-        }
-        else
-        {
-            // ゲーム開始時に消去されたスプライトの位置に新しいスプライトを配置
-            StartCoroutine(SpawnNewPieces());
         }
     }
 
@@ -174,6 +175,7 @@ public class Piece : MonoBehaviour
 
     private LineRenderer CreateLine(Vector3 startPosition, Vector3 endPosition)
     {
+        
         GameObject lineObj = Instantiate(linePrefab);
         LineRenderer lineRenderer = lineObj.GetComponent<LineRenderer>();
         lineRenderer.SetPosition(0, startPosition);
@@ -195,13 +197,12 @@ public class Piece : MonoBehaviour
 
         bool validCompound = CheckIfValidCompound(out List<ElementType> matchedCompound);
 
-        if (validCompound == true) 
+        if (validCompound)
         {
             foreach (var piece in connectedPieces)
             {
                 if (piece != null)
                 {
-                    Debug.Log($"Destroying piece: {piece.name}");
                     piece.DestroyWithEffect();
                 }
             }
@@ -238,7 +239,6 @@ public class Piece : MonoBehaviour
 
         gridManager.ResetActiveArea();
     }
-
     private bool CheckIfValidCompound(out List<ElementType> matchedCompound)
     {
         var elementCounts = new Dictionary<ElementType, int>();
@@ -289,49 +289,51 @@ public class Piece : MonoBehaviour
 
     public void DestroyWithEffect()
     {
-        // 消去されたスプライトの位置を保存する
-        destroyedPositions.Add(transform.position);
-
         // エフェクトを生成する
         if (sparkleEffectPrefab != null)
         {
             GameObject effect = Instantiate(sparkleEffectPrefab, transform.position, Quaternion.identity);
+            
+            // パーティクルシステムを取得し再生
             ParticleSystem particleSystem = effect.GetComponent<ParticleSystem>();
             if (particleSystem != null)
             {
                 particleSystem.Play();
-                Destroy(effect, particleSystem.main.duration);
+            }
+
+            // 一定時間後にエフェクトオブジェクトを削除
+            Destroy(effect, particleSystem.main.duration + particleSystem.main.startLifetime.constantMax);
+        }
+
+        // 自身の削除
+        Destroy(gameObject);
+
+        // 自身に接続されたすべての青い線を削除
+        List<LineRenderer> linesToRemove = new List<LineRenderer>();
+        foreach (var line in allLines)
+        {
+            if (line != null && (line.GetPosition(0) == transform.position || line.GetPosition(1) == transform.position))
+            {
+                linesToRemove.Add(line);
             }
         }
-        else
+        foreach (var line in linesToRemove)
         {
-            Debug.LogWarning("Sparkle effect prefab is not assigned.");
+            allLines.Remove(line);
+            Destroy(line.gameObject);
         }
-
-        // スプライトを消去する
-        Debug.Log("Destroying piece: " + gameObject.name);
-        Destroy(gameObject);
     }
 
-    private IEnumerator SpawnNewPieces()
-    {
-        yield return new WaitForSeconds(1f); // 1秒待機
 
-        foreach (var position in destroyedPositions)
-        {
-            // ランダムにスプライトを選択
-            ElementType randomElement = (ElementType)Random.Range(0, 3);
-            GameObject newPieceObj = Instantiate(gameObject, position, Quaternion.identity);
-            Piece newPiece = newPieceObj.GetComponent<Piece>();
-            newPiece.SetElementType(randomElement);
-        }
-
-        destroyedPositions.Clear();
-    }
 
     private Vector2Int GetGridPosition()
     {
         return new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
-
     }
+
+    internal void SetInteractive(bool enable)
+    {
+        throw new NotImplementedException();
+    }
+
 }
