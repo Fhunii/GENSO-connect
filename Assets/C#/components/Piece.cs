@@ -195,7 +195,7 @@ public class Piece : MonoBehaviour
 
         bool validCompound = CheckIfValidCompound(out List<ElementType> matchedCompound);
 
-        if (validCompound)
+        if (validCompound == true) 
         {
             foreach (var piece in connectedPieces)
             {
