@@ -36,6 +36,9 @@ public class Piece : MonoBehaviour
     private bool isActive = true;
     private static ScoreManager scoreManager;
 
+    // 新しいスプライト生成用に座標を保存するリスト
+    private static List<Vector3> savedPositions = new List<Vector3>();
+
     // 化合物ごとのスコアを設定
     private static Dictionary<List<ElementType>, int> compoundScores = new Dictionary<List<ElementType>, int>()
     {
@@ -175,7 +178,6 @@ public class Piece : MonoBehaviour
 
     private LineRenderer CreateLine(Vector3 startPosition, Vector3 endPosition)
     {
-        
         GameObject lineObj = Instantiate(linePrefab);
         LineRenderer lineRenderer = lineObj.GetComponent<LineRenderer>();
         lineRenderer.SetPosition(0, startPosition);
@@ -199,6 +201,9 @@ public class Piece : MonoBehaviour
 
         if (validCompound)
         {
+            // 座標を保存
+            SavePiecePositions();
+
             foreach (var piece in connectedPieces)
             {
                 if (piece != null)
@@ -213,127 +218,110 @@ public class Piece : MonoBehaviour
                 int scoreToAdd = compoundScores[matchedCompound];
                 scoreManager.AddScore(scoreToAdd);
             }
+
+            // 新しいスプライトを生成
+            CreateNewPieces();
         }
         else
         {
-            foreach (var line in allLines)
-            {
-                if (line != null)
-                {
-                    Destroy(line.gameObject);
-                }
-            }
-
-            // すべてのスプライトを有効に戻す
             foreach (var piece in connectedPieces)
             {
                 if (piece != null)
                 {
-                    piece.SetActive(true);
+                    piece.SetActive(true); // すべてのスプライトを再びアクティブにする
                 }
+            }
+
+            // 全ての青い線を削除
+            foreach (var line in allLines)
+            {
+                Destroy(line.gameObject);
             }
         }
 
         connectedPieces.Clear();
         allLines.Clear();
 
-        gridManager.ResetActiveArea();
+        Vector2Int gridPosition = GetGridPosition();
+        if (gridManager != null)
+        {
+            gridManager.DeactivateArea(gridPosition);
+        }
     }
-    private bool CheckIfValidCompound(out List<ElementType> matchedCompound)
+
+    private void SavePiecePositions()
     {
-        var elementCounts = new Dictionary<ElementType, int>();
+        savedPositions.Clear();
         foreach (var piece in connectedPieces)
         {
-            if (piece != null)
-            {
-                if (!elementCounts.ContainsKey(piece.elementType))
-                {
-                    elementCounts[piece.elementType] = 0;
-                }
-                elementCounts[piece.elementType]++;
-            }
+            savedPositions.Add(piece.transform.position);
         }
+    }
 
-        foreach (var combination in compoundScores.Keys)
+    private void CreateNewPieces()
+    {
+        foreach (var position in savedPositions)
         {
-            var tempCounts = new Dictionary<ElementType, int>(elementCounts);
-
-            bool isMatch = true;
-            foreach (var element in combination)
-            {
-                if (tempCounts.ContainsKey(element))
-                {
-                    tempCounts[element]--;
-                    if (tempCounts[element] == 0)
-                    {
-                        tempCounts.Remove(element);
-                    }
-                }
-                else
-                {
-                    isMatch = false;
-                    break;
-                }
-            }
-
-            if (isMatch && tempCounts.Count == 0)
-            {
-                matchedCompound = combination;
-                return true;
-            }
+            Piece newPiece = Instantiate(this, position, Quaternion.identity);
+            newPiece.SetActive(true);
         }
-
-        matchedCompound = null;
-        return false;
     }
 
     public void DestroyWithEffect()
     {
-        // エフェクトを生成する
         if (sparkleEffectPrefab != null)
         {
-            GameObject effect = Instantiate(sparkleEffectPrefab, transform.position, Quaternion.identity);
-            
-            // パーティクルシステムを取得し再生
-            ParticleSystem particleSystem = effect.GetComponent<ParticleSystem>();
-            if (particleSystem != null)
-            {
-                particleSystem.Play();
-            }
-
-            // 一定時間後にエフェクトオブジェクトを削除
-            Destroy(effect, particleSystem.main.duration + particleSystem.main.startLifetime.constantMax);
+            Instantiate(sparkleEffectPrefab, transform.position, Quaternion.identity);
         }
-
-        // 自身の削除
         Destroy(gameObject);
+    }
 
-        // 自身に接続されたすべての青い線を削除
-        List<LineRenderer> linesToRemove = new List<LineRenderer>();
-        foreach (var line in allLines)
+    private bool CheckIfValidCompound(out List<ElementType> matchedCompound)
+    {
+        matchedCompound = null;
+        List<ElementType> connectedTypes = new List<ElementType>();
+
+        foreach (var piece in connectedPieces)
         {
-            if (line != null && (line.GetPosition(0) == transform.position || line.GetPosition(1) == transform.position))
+            connectedTypes.Add(piece.elementType);
+        }
+
+        foreach (var compound in compoundScores.Keys)
+        {
+            if (MatchCompound(connectedTypes, compound))
             {
-                linesToRemove.Add(line);
+                matchedCompound = compound;
+                return true;
             }
         }
-        foreach (var line in linesToRemove)
+        return false;
+    }
+
+    private bool MatchCompound(List<ElementType> connectedTypes, List<ElementType> validCombination)
+    {
+        if (connectedTypes.Count != validCombination.Count) return false;
+
+        List<ElementType> tempConnectedTypes = new List<ElementType>(connectedTypes);
+        foreach (var element in validCombination)
         {
-            allLines.Remove(line);
-            Destroy(line.gameObject);
+            if (tempConnectedTypes.Contains(element))
+            {
+                tempConnectedTypes.Remove(element);
+            }
+            else
+            {
+                return false;
+            }
         }
+
+        return true;
     }
 
-
-
-    private Vector2Int GetGridPosition()
+    public Vector2Int GetGridPosition()
     {
-        return new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
+        Vector3 localPosition = transform.localPosition;
+        int x = Mathf.RoundToInt(localPosition.x);
+        int y = Mathf.RoundToInt(localPosition.y);
+        return new Vector2Int(x, y);
     }
-
-    internal void SetInteractive(bool enable)
-    {
-        throw new NotImplementedException();
-    }
-
 }
