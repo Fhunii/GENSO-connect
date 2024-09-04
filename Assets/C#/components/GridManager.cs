@@ -93,6 +93,23 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    public void DeactivateArea(Vector2Int center)
+    {
+        // クリック位置を右に2マス、上に4マス移動
+        Vector2Int adjustedCenter = new Vector2Int(center.x + 2, center.y + 4);
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                bool isActive = Mathf.Abs(x - adjustedCenter.x) <= 1 && Mathf.Abs(y - adjustedCenter.y) <= 1;
+                if (!isActive)
+                {
+                    grid[x, y].SetActive(false);
+                }
+            }
+        }
+    }
 
     // 新しいピースをランダムに追加するメソッド
     public void AddRandomPieceAt(Vector2Int gridPosition)

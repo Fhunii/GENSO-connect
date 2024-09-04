@@ -245,7 +245,7 @@ public class Piece : MonoBehaviour
         Vector2Int gridPosition = GetGridPosition();
         if (gridManager != null)
         {
-            gridManager.DeactivateArea(gridPosition);
+            gridManager.SetActiveArea(gridPosition);
         }
     }
 
