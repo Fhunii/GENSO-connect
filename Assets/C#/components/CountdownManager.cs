@@ -35,7 +35,6 @@ public class CountdownManager : MonoBehaviour
         startText.gameObject.SetActive(true);
 
         // START!の表示
-        
         yield return new WaitForSeconds(startTextDisplayDuration);
 
         startText.gameObject.SetActive(false);
