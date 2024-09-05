@@ -20,12 +20,18 @@ public class ScoreManager : MonoBehaviour
 
     private void UpdateScoreText()
     {
-        scoreText.text = "" + currentScore; // ToString()を使わずに文字列に変換 score:を追加
+        scoreText.text = "" + currentScore; // "score:"を追加
     }
 
     public void ResetScore()
     {
         currentScore = 0;
         UpdateScoreText();
+    }
+
+    // 現在のスコアを取得するためのメソッドを追加
+    public int GetScore()
+    {
+        return currentScore;
     }
 }
