@@ -1,15 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
-using UnityEngine.SceneManagement;
 
 public class SettingsMenu : MonoBehaviour
 {
     public Slider bgmSlider;
     public Slider sfxSlider;
     public AudioClip settingsSFX;
-
-    private Coroutine sfxCoroutine;
 
     private void Start()
     {
@@ -20,7 +16,8 @@ public class SettingsMenu : MonoBehaviour
         bgmSlider.onValueChanged.AddListener(SetBGMVolume);
         sfxSlider.onValueChanged.AddListener(SetSFXVolume);
 
-        StartSFXCoroutine();
+        // 初期化時に設定画面の音を再生
+        AudioManager.Instance.InitializeSettingsAudio();
     }
 
     public void SetBGMVolume(float volume)
@@ -35,32 +32,11 @@ public class SettingsMenu : MonoBehaviour
         PlayerPrefs.SetFloat("SFXVolume", volume);
     }
 
-    private void StartSFXCoroutine()
-    {
-        if (sfxCoroutine != null)
-        {
-            StopCoroutine(sfxCoroutine);
-        }
-        sfxCoroutine = StartCoroutine(PlaySettingsSFX());
-    }
-
-    private IEnumerator PlaySettingsSFX()
-    {
-        while (SceneManager.GetActiveScene().name == "settings scene")
-        {
-            AudioManager.Instance.PlaySFX(settingsSFX);
-            yield return new WaitForSeconds(1f);
-        }
-    }
-
     public void OnBackButtonPressed()
     {
         // メニューシーンに戻る処理
-        AudioManager.Instance.StopBGM();
-        if (sfxCoroutine != null)
-        {
-            StopCoroutine(sfxCoroutine);
-        }
-        // 他の処理...
+        AudioManager.Instance.StopSettingsAudio();
+        // シーン遷移処理を追加
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MenuScene");
     }
 }

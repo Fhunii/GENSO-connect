@@ -18,7 +18,7 @@ public class settingsbutton : MonoBehaviour
     
     public void OnClick()
     {
-        StartCoroutine(SettingsClicked());
+      //  StartCoroutine(SettingsClicked());
 
     }
     // ボタンが押された場合、今回呼び出される関数
