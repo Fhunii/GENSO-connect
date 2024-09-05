@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -7,33 +6,47 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        if (AudioManager.Instance == null)
+        {
+            Debug.LogError("AudioManager instance is not found!");
+            return;
+        }
+
         // カウントダウンが終わり、START!が表示された後にBGMを再生
         AudioManager.Instance.PlayBGM(gameBGM);
     }
 
     public void OnSpriteConnected()
     {
-        // スプライトがつながれたときの効果音を再生
-        AudioManager.Instance.PlaySFX(AudioManager.Instance.spriteConnectedClip);
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.spriteConnectedClip);
+        }
     }
 
     public void OnSpriteDestroyed()
     {
-        // スプライトが消去されたときの効果音を再生
-        AudioManager.Instance.PlaySFX(AudioManager.Instance.spriteDestroyedClip);
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.spriteDestroyedClip);
+        }
     }
 
     public void OnQuitButtonPressed()
     {
-        // Quitボタンが押されたときの効果音を再生
-        AudioManager.Instance.PlaySFX(AudioManager.Instance.quitButtonClip);
-        AudioManager.Instance.StopBGM();
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.quitButtonClip);
+            AudioManager.Instance.StopBGM();
+        }
         // 他の処理...
     }
 
     public void OnOtherButtonPressed()
     {
-        // その他のボタンが押されたときの効果音を再生
-        AudioManager.Instance.PlaySFX(AudioManager.Instance.otherButtonClip);
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.otherButtonClip);
+        }
     }
 }

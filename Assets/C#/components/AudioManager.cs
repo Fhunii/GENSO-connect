@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class AudioManager : MonoBehaviour
 {
@@ -12,6 +13,11 @@ public class AudioManager : MonoBehaviour
     public AudioClip spriteDestroyedClip;
     public AudioClip quitButtonClip;
     public AudioClip otherButtonClip;
+
+    public float sfxVolume = 1f; // 音量設定
+    public float bgmVolume = 1f;
+
+    private Coroutine sfxRoutine;
 
     private void Awake()
     {
@@ -27,9 +33,11 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+
     public void PlayBGM(AudioClip clip)
     {
         bgmSource.clip = clip;
+        bgmSource.volume = bgmVolume;
         bgmSource.Play();
     }
 
@@ -40,13 +48,53 @@ public class AudioManager : MonoBehaviour
 
     public void PlaySFX(AudioClip clip)
     {
-        sfxSource.PlayOneShot(clip);
+        sfxSource.PlayOneShot(clip, sfxVolume);
     }
 
-    // Initialize BGM for settings scene
+    public void SetBGMVolume(float volume)
+    {
+        bgmVolume = volume;
+        if (bgmSource.isPlaying)
+        {
+            bgmSource.volume = bgmVolume;
+        }
+    }
+
+    public void SetSFXVolume(float volume)
+    {
+        sfxVolume = volume;
+    }
+
     public void InitializeSettingsAudio()
     {
         PlayBGM(settingsBGM);
-        PlaySFX(spriteConnectedClip); // Example effect, adjust as needed
+        StartSFXRoutine(spriteConnectedClip, 1f);
+    }
+
+    private void StartSFXRoutine(AudioClip clip, float interval)
+    {
+        if (sfxRoutine != null)
+        {
+            StopCoroutine(sfxRoutine);
+        }
+        sfxRoutine = StartCoroutine(PlaySFXRepeatedly(clip, interval));
+    }
+
+    private IEnumerator PlaySFXRepeatedly(AudioClip clip, float interval)
+    {
+        while (true)
+        {
+            PlaySFX(clip);
+            yield return new WaitForSeconds(interval);
+        }
+    }
+
+    public void StopSettingsAudio()
+    {
+        StopBGM();
+        if (sfxRoutine != null)
+        {
+            StopCoroutine(sfxRoutine);
+        }
     }
 }

@@ -26,6 +26,7 @@ public class ToMenuButton : MonoBehaviour
     public IEnumerator ToMenuClicked()
     {
         UnityEngine.SceneManagement.SceneManager.LoadScene("menu scene");
+        AudioManager.Instance.StopSettingsAudio();
         yield return null;
     }
 
