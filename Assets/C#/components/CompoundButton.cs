@@ -7,6 +7,7 @@ public class CompoundButton : MonoBehaviour
 {
     public TextMeshProUGUI buttonText; // ボタンのテキスト表示
     private Button button; // ボタンコンポーネント
+    private string compoundName; // 化合物の名前
     private Action<string> onClickAction; // クリック時のアクションを外部から設定
 
     void Awake()
@@ -15,25 +16,15 @@ public class CompoundButton : MonoBehaviour
         button.onClick.AddListener(OnButtonClick);
     }
 
-    public void SetCompoundName(string name)
+    public void Initialize(string name, Action<string> action)
     {
+        compoundName = name;
         buttonText.text = name; // ボタンのテキストを設定
-    }
-
-    public void SetOnClickAction(Action<string> action)
-    {
         onClickAction = action; // 外部からのアクションを設定
     }
 
     private void OnButtonClick()
     {
-        if (onClickAction != null)
-        {
-            onClickAction.Invoke(buttonText.text); // クリック時に設定されたアクションを実行
-        }
-        else
-        {
-            Debug.Log("Compound Button Clicked: " + buttonText.text);
-        }
+        onClickAction?.Invoke(compoundName); // クリック時に設定されたアクションを実行
     }
 }
