@@ -18,7 +18,7 @@ public class archivebutton : MonoBehaviour
     
     public void OnClick()
     {
-        StartCoroutine(ArchiveClicked());
+        // StartCoroutine(ArchiveClicked());　ここを変えればarchive sceneに遷移する
 
     }
     // ボタンが押された場合、今回呼び出される関数
